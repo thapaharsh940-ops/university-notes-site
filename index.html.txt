@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Notes - Share Knowledge</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Landing Page -->
+    <div id="landingPage" class="page active">
+        <header class="hero">
+            <nav class="navbar">
+                <h1 class="logo">University Notes</h1>
+                <div class="nav-buttons">
+                    <button onclick="showPage('signIn')" class="btn-secondary">Sign In</button>
+                    <button onclick="showPage('createAccount')" class="btn-primary">Get Started</button>
+                </div>
+            </nav>
+        </header>
+        
+        <section class="hero-content">
+            <h2>Share Your Knowledge</h2>
+            <p class="subtitle">Organized Structure</p>
+            <p>Content is organized by branch, semester, section, and groups for easy navigation</p>
+            
+            <div class="features">
+                <div class="feature-card">
+                    <h3>📚 Easy Uploads</h3>
+                    <p>Upload PDFs, videos, notes, and any educational content you want to share</p>
+                </div>
+                <div class="feature-card">
+                    <h3>👥 Community Driven</h3>
+                    <p>Everyone can upload and contribute. Anyone can delete content</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🔍 Powerful Search</h3>
+                    <p>Find exactly what you need with full-text search across all documents</p>
+                </div>
+            </div>
+            
+            <button onclick="showPage('createAccount')" class="btn-cta">Create Your Account</button>
+        </section>
+    </div>
+
+    <!-- Create Account Page -->
+    <div id="createAccount" class="page">
+        <div class="auth-container">
+            <h2>Create Account</h2>
+            <p>Join University Notes today</p>
+            <form id="signupForm" onsubmit="handleSignup(event)">
+                <input type="email" placeholder="your@email.com" required>
+                <input type="password" placeholder="Password" required>
+                <input type="password" placeholder="Confirm Password" required>
+                <button type="submit" class="btn-primary">Sign Up</button>
+            </form>
+            <p class="auth-link">Already have an account? <a onclick="showPage('signIn')">Login</a></p>
+        </div>
+    </div>
+
+    <!-- Sign In Page -->
+    <div id="signIn" class="page">
+        <div class="auth-container">
+            <h2>Login to your account</h2>
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <input type="email" placeholder="your@email.com" required>
+                <input type="password" placeholder="Password" required>
+                <label><input type="checkbox"> Remember me for 30 days</label>
+                <button type="submit" class="btn-primary">Sign In</button>
+            </form>
+            <p class="auth-link">Don't have an account? <a onclick="showPage('createAccount')">Sign up</a></p>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="page">
+        <div class="dashboard-layout">
+            <aside class="sidebar">
+                <h2 class="logo">University Notes</h2>
+                <nav class="sidebar-nav">
+                    <a onclick="showDashboard('overview')" class="nav-item">📊 Overview</a>
+                    <a onclick="showDashboard('allBranches')" class="nav-item">📚 All Branches</a>
+                    <a onclick="showDashboard('search')" class="nav-item">🔍 Search</a>
+                    <a onclick="showDashboard('myUploads')" class="nav-item">📤 My Uploads</a>
+                    <a onclick="logout()" class="nav-item">🚪 Logout</a>
+                </nav>
+            </aside>
+
+            <main class="dashboard-content">
+                <!-- Overview Section -->
+                <div id="overview" class="dashboard-section active">
+                    <h1>Dashboard Overview</h1>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Total Branches</h3>
+                            <p id="totalBranches">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>My Uploads</h3>
+                            <p id="myUploadsCount">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Total Documents</h3>
+                            <p id="totalDocs">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- All Branches Section -->
+                <div id="allBranches" class="dashboard-section">
+                    <div class="section-header">
+                        <h1>All Branches</h1>
+                        <button onclick="showCreateBranch()" class="btn-primary">+ New Branch</button>
+                    </div>
+                    <div id="branchList" class="branch-grid"></div>
+                </div>
+
+                <!-- Create Branch Form -->
+                <div id="createBranchForm" class="dashboard-section" style="display:none">
+                    <h1>Create New Branch</h1>
+                    <form onsubmit="handleCreateBranch(event)">
+                        <label>Branch Name</label>
+                        <input type="text" placeholder="e.g., Computer Science" required>
+                        <label>Description</label>
+                        <textarea placeholder="Brief description of the branch"></textarea>
+                        <button type="submit" class="btn-primary">Create Branch</button>
+                        <button type="button" onclick="showDashboard('allBranches')" class="btn-secondary">Cancel</button>
+                    </form>
+                </div>
+
+                <!-- Branch Detail -->
+                <div id="branchDetail" class="dashboard-section">
+                    <div class="section-header">
+                        <h1 id="branchTitle"></h1>
+                        <button onclick="showCreateSemester()" class="btn-primary">+ New Semester</button>
+                    </div>
+                    <div id="semesterList"></div>
+                </div>
+
+                <!-- Create Semester Form -->
+                <div id="createSemesterForm" class="dashboard-section" style="display:none">
+                    <h1>Create New Semester</h1>
+                    <form onsubmit="handleCreateSemester(event)">
+                        <label>Semester Number</label>
+                        <input type="number" placeholder="1, 2, 3..." required>
+                        <label>Semester Name</label>
+                        <input type="text" placeholder="e.g., Fall 2024" required>
+                        <button type="submit" class="btn-primary">Create Semester</button>
+                        <button type="button" onclick="cancelSemester()" class="btn-secondary">Cancel</button>
+                    </form>
+                </div>
+
+                <!-- Semester Detail -->
+                <div id="semesterDetail" class="dashboard-section">
+                    <h1 id="semesterTitle"></h1>
+                    <div class="section-input">
+                        <input type="text" id="newSectionInput" placeholder="New section name...">
+                        <button onclick="addSection()" class="btn-primary">+ Add Section</button>
+                    </div>
+                    <div id="sectionList"></div>
+                </div>
+
+                <!-- Search Section -->
+                <div id="search" class="dashboard-section">
+                    <h1>Search Content</h1>
+                    <div class="search-bar">
+                        <input type="text" id="searchInput" placeholder="Search documents...">
+                        <button onclick="searchContent()" class="btn-primary">Search</button>
+                    </div>
+                    <div id="searchResults"></div>
+                </div>
+
+                <!-- My Uploads -->
+                <div id="myUploads" class="dashboard-section">
+                    <h1>My Uploads</h1>
+                    <div id="uploadsList"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
