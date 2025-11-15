@@ -444,3 +444,4 @@ supabase.auth.onAuthStateChange((event, session) => {
         showPage('landingPage');
     }
 });
+
