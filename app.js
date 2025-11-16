@@ -1,9 +1,134 @@
 import { supabase } from './supabaseClient.js';
 
-// Admin Code (required for creating structure)
+// Admin Code
 const ADMIN_CODE = 'sahil12345';
+let currentUser = null;
 
-// Navigation
+// ==================== AUTH FUNCTIONS ====================
+window.showAuthModal = function() {
+    document.getElementById('auth-modal').style.display = 'flex';
+};
+
+window.hideAuthModal = function() {
+    document.getElementById('auth-modal').style.display = 'none';
+};
+
+window.switchAuthTab = function(tab) {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+    
+    if (tab === 'login') {
+        document.querySelector('.auth-tab:first-child').classList.add('active');
+        document.getElementById('login-form').classList.add('active');
+        document.getElementById('auth-title').textContent = 'Login to University Notes';
+    } else {
+        document.querySelector('.auth-tab:last-child').classList.add('active');
+        document.getElementById('signup-form').classList.add('active');
+        document.getElementById('auth-title').textContent = 'Create Account';
+    }
+};
+
+window.handleSignup = async function() {
+    const email = document.getElementById('signup-email').value;
+    const password = document.getElementById('signup-password').value;
+    const confirm = document.getElementById('signup-confirm').value;
+
+    if (!email || !password || !confirm) {
+        alert('Please fill all fields');
+        return;
+    }
+
+    if (password !== confirm) {
+        alert('Passwords do not match');
+        return;
+    }
+
+    if (password.length < 6) {
+        alert('Password must be at least 6 characters');
+        return;
+    }
+
+    try {
+        const { data, error } = await supabase.auth.signUp({
+            email: email,
+            password: password
+        });
+
+        if (error) throw error;
+
+        alert('Account created! Please check your email to verify your account.');
+        hideAuthModal();
+        document.getElementById('signup-email').value = '';
+        document.getElementById('signup-password').value = '';
+        document.getElementById('signup-confirm').value = '';
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+};
+
+window.handleLogin = async function() {
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+
+    if (!email || !password) {
+        alert('Please fill all fields');
+        return;
+    }
+
+    try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+        if (error) throw error;
+
+        currentUser = data.user;
+        updateUIForUser(data.user);
+        hideAuthModal();
+        document.getElementById('login-email').value = '';
+        document.getElementById('login-password').value = '';
+        alert('Logged in successfully!');
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+};
+
+window.handleLogout = async function() {
+    try {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+
+        currentUser = null;
+        updateUIForUser(null);
+        alert('Logged out successfully');
+    } catch (error) {
+        alert('Error logging out: ' + error.message);
+    }
+};
+
+function updateUIForUser(user) {
+    if (user) {
+        document.getElementById('login-btn').style.display = 'none';
+        document.getElementById('user-info').style.display = 'flex';
+        document.getElementById('user-email').textContent = user.email;
+        document.getElementById('upload-login-required').style.display = 'none';
+        document.getElementById('upload-form-container').style.display = 'block';
+    } else {
+        document.getElementById('login-btn').style.display = 'block';
+        document.getElementById('user-info').style.display = 'none';
+        document.getElementById('upload-login-required').style.display = 'block';
+        document.getElementById('upload-form-container').style.display = 'none';
+    }
+}
+
+// Check auth state on load
+supabase.auth.onAuthStateChange((event, session) => {
+    currentUser = session?.user || null;
+    updateUIForUser(currentUser);
+});
+
+// ==================== NAVIGATION ====================
 document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         const section = btn.dataset.section;
@@ -18,7 +143,6 @@ function showSection(sectionName) {
     document.getElementById(`${sectionName}-section`).classList.add('active');
     document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
     
-    // Load data for each section
     if (sectionName === 'overview') loadDashboard();
     if (sectionName === 'browse') loadBranches();
     if (sectionName === 'search') loadFilters();
@@ -26,7 +150,6 @@ function showSection(sectionName) {
     if (sectionName === 'manage') loadManageOptions();
 }
 
-// Check admin code before sensitive operations
 function checkAdminCode() {
     const code = prompt('Enter admin code to continue:');
     return code === ADMIN_CODE;
@@ -37,31 +160,26 @@ async function loadDashboard() {
     try {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
         const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-        // Total uploads
-        const { data: total, error: totalError } = await supabase
+        const { count: total } = await supabase
             .from('documents')
-            .select('id', { count: 'exact', head: true });
+            .select('*', { count: 'exact', head: true });
         
-        // Monthly uploads
-        const { data: monthly, error: monthlyError } = await supabase
+        const { count: monthly } = await supabase
             .from('documents')
-            .select('id', { count: 'exact', head: true })
+            .select('*', { count: 'exact', head: true })
             .gte('created_at', firstDayOfMonth.toISOString());
         
-        // Today's uploads
-        const { data: todayData, error: todayError } = await supabase
+        const { count: todayCount } = await supabase
             .from('documents')
-            .select('id', { count: 'exact', head: true })
+            .select('*', { count: 'exact', head: true })
             .gte('created_at', today.toISOString());
 
-        document.getElementById('total-uploads').textContent = total?.length || 0;
-        document.getElementById('month-uploads').textContent = monthly?.length || 0;
-        document.getElementById('today-uploads').textContent = todayData?.length || 0;
+        document.getElementById('total-uploads').textContent = total || 0;
+        document.getElementById('month-uploads').textContent = monthly || 0;
+        document.getElementById('today-uploads').textContent = todayCount || 0;
 
-        // Load recent uploads
         const { data: recent } = await supabase
             .from('documents')
             .select('*, subjects(name)')
@@ -72,9 +190,9 @@ async function loadDashboard() {
         if (recent && recent.length > 0) {
             recentList.innerHTML = recent.map(doc => `
                 <div class="recent-item">
-                    <span>${doc.title}</span>
+                    <span class="recent-title">${doc.title}</span>
                     <span class="file-badge">${doc.file_type || 'file'}</span>
-                    <button onclick="downloadFile('${doc.file_url}')" class="download-btn">⬇️ Download</button>
+                    <button onclick="downloadFile('${doc.file_url}')" class="download-btn">⬇️</button>
                 </div>
             `).join('');
         } else {
@@ -88,7 +206,7 @@ async function loadDashboard() {
 // ==================== BROWSE ====================
 async function loadBranches() {
     try {
-        const { data: branches, error } = await supabase
+        const { data: branches } = await supabase
             .from('branches')
             .select('*')
             .order('name');
@@ -109,126 +227,110 @@ async function loadBranches() {
     }
 }
 
-async function loadSemesters(branchId, branchName) {
-    try {
-        const { data: semesters } = await supabase
-            .from('semesters')
-            .select('*')
-            .eq('branch_id', branchId)
-            .order('name');
+window.loadSemesters = async function(branchId, branchName) {
+    const { data: semesters } = await supabase
+        .from('semesters')
+        .select('*')
+        .eq('branch_id', branchId)
+        .order('name');
 
-        const branchesList = document.getElementById('branches-list');
-        branchesList.innerHTML = `
-            <button onclick="loadBranches()">← Back to Branches</button>
-            <h3>${branchName} - Semesters</h3>
-            ${semesters && semesters.length > 0 ? 
-                semesters.map(sem => `
-                    <div class="semester-card" onclick="loadSections('${sem.id}', '${sem.name}')">
-                        <h4>📖 ${sem.name}</h4>
-                        <p>${sem.description || ''}</p>
-                    </div>
-                `).join('') : 
-                '<p>No semesters found</p>'
-            }
-        `;
-    } catch (error) {
-        console.error('Error loading semesters:', error);
-    }
-}
+    const branchesList = document.getElementById('branches-list');
+    branchesList.innerHTML = `
+        <button onclick="loadBranches()" class="back-btn">← Back to Branches</button>
+        <h3>${branchName} - Semesters</h3>
+        ${semesters && semesters.length > 0 ? 
+            semesters.map(sem => `
+                <div class="semester-card" onclick="loadSections('${sem.id}', '${sem.name}')">
+                    <h4>📖 ${sem.name}</h4>
+                    <p>${sem.description || ''}</p>
+                </div>
+            `).join('') : 
+            '<p>No semesters found</p>'
+        }
+    `;
+};
 
-async function loadSections(semesterId, semesterName) {
-    try {
-        const { data: sections } = await supabase
-            .from('sections')
-            .select('*')
-            .eq('semester_id', semesterId)
-            .order('name');
+window.loadSections = async function(semesterId, semesterName) {
+    const { data: sections } = await supabase
+        .from('sections')
+        .select('*')
+        .eq('semester_id', semesterId)
+        .order('name');
 
-        const branchesList = document.getElementById('branches-list');
-        branchesList.innerHTML = `
-            <button onclick="loadBranches()">← Back</button>
-            <h3>${semesterName} - Sections</h3>
-            ${sections && sections.length > 0 ? 
-                sections.map(sec => `
-                    <div class="section-card" onclick="loadSubjects('${sec.id}', '${sec.name}')">
-                        <h4>📂 ${sec.name}</h4>
-                        <p>${sec.description || ''}</p>
-                    </div>
-                `).join('') : 
-                '<p>No sections found</p>'
-            }
-        `;
-    } catch (error) {
-        console.error('Error loading sections:', error);
-    }
-}
+    const branchesList = document.getElementById('branches-list');
+    branchesList.innerHTML = `
+        <button onclick="loadBranches()" class="back-btn">← Back</button>
+        <h3>${semesterName} - Sections</h3>
+        ${sections && sections.length > 0 ? 
+            sections.map(sec => `
+                <div class="section-card" onclick="loadSubjects('${sec.id}', '${sec.name}')">
+                    <h4>📂 ${sec.name}</h4>
+                    <p>${sec.description || ''}</p>
+                </div>
+            `).join('') : 
+            '<p>No sections found</p>'
+        }
+    `;
+};
 
-async function loadSubjects(sectionId, sectionName) {
-    try {
-        const { data: subjects } = await supabase
-            .from('subjects')
-            .select('*')
-            .eq('section_id', sectionId)
-            .order('name');
+window.loadSubjects = async function(sectionId, sectionName) {
+    const { data: subjects } = await supabase
+        .from('subjects')
+        .select('*')
+        .eq('section_id', sectionId)
+        .order('name');
 
-        const branchesList = document.getElementById('branches-list');
-        branchesList.innerHTML = `
-            <button onclick="loadBranches()">← Back</button>
-            <h3>${sectionName} - Subjects</h3>
-            ${subjects && subjects.length > 0 ? 
-                subjects.map(subj => `
-                    <div class="subject-card" onclick="loadDocuments('${subj.id}', '${subj.name}')">
-                        <h4>📝 ${subj.name}</h4>
-                        <p>${subj.description || ''}</p>
-                    </div>
-                `).join('') : 
-                '<p>No subjects found</p>'
-            }
-        `;
-    } catch (error) {
-        console.error('Error loading subjects:', error);
-    }
-}
+    const branchesList = document.getElementById('branches-list');
+    branchesList.innerHTML = `
+        <button onclick="loadBranches()" class="back-btn">← Back</button>
+        <h3>${sectionName} - Subjects</h3>
+        ${subjects && subjects.length > 0 ? 
+            subjects.map(subj => `
+                <div class="subject-card" onclick="loadDocuments('${subj.id}', '${subj.name}')">
+                    <h4>📝 ${subj.name}</h4>
+                    <p>${subj.description || ''}</p>
+                </div>
+            `).join('') : 
+            '<p>No subjects found</p>'
+        }
+    `;
+};
 
-async function loadDocuments(subjectId, subjectName) {
-    try {
-        const { data: documents } = await supabase
-            .from('documents')
-            .select('*')
-            .eq('subject_id', subjectId)
-            .order('created_at', { ascending: false });
+window.loadDocuments = async function(subjectId, subjectName) {
+    const { data: documents } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('subject_id', subjectId)
+        .order('created_at', { ascending: false });
 
-        const branchesList = document.getElementById('branches-list');
-        branchesList.innerHTML = `
-            <button onclick="loadBranches()">← Back</button>
-            <h3>${subjectName} - Documents</h3>
-            ${documents && documents.length > 0 ? 
-                documents.map(doc => `
-                    <div class="document-card">
-                        <h4>📄 ${doc.title}</h4>
-                        <p>${doc.description || ''}</p>
+    const branchesList = document.getElementById('branches-list');
+    branchesList.innerHTML = `
+        <button onclick="loadBranches()" class="back-btn">← Back</button>
+        <h3>${subjectName} - Documents</h3>
+        ${documents && documents.length > 0 ? 
+            documents.map(doc => `
+                <div class="document-card">
+                    <h4>📄 ${doc.title}</h4>
+                    <p>${doc.description || ''}</p>
+                    <div class="doc-meta">
                         <span class="file-badge">${doc.file_type || 'file'}</span>
                         <span class="file-size">${formatFileSize(doc.file_size)}</span>
-                        <button onclick="downloadFile('${doc.file_url}')" class="download-btn">⬇️ Download</button>
                     </div>
-                `).join('') : 
-                '<p>No documents found</p>'
-            }
-        `;
-    } catch (error) {
-        console.error('Error loading documents:', error);
-    }
-}
+                    <button onclick="downloadFile('${doc.file_url}')" class="download-btn">⬇️ Download</button>
+                </div>
+            `).join('') : 
+            '<p>No documents found</p>'
+        }
+    `;
+};
 
 // ==================== SEARCH ====================
 async function loadFilters() {
-    // Load branches for filter
     const { data: branches } = await supabase.from('branches').select('*').order('name');
     const branchFilter = document.getElementById('branch-filter');
     branchFilter.innerHTML = '<option value="">All Branches</option>' + 
         (branches || []).map(b => `<option value="${b.id}">${b.name}</option>`).join('');
 
-    // Load subjects for filter
     const { data: subjects } = await supabase.from('subjects').select('*').order('name');
     const subjectFilter = document.getElementById('subject-filter');
     subjectFilter.innerHTML = '<option value="">All Subjects</option>' + 
@@ -237,34 +339,24 @@ async function loadFilters() {
 
 window.performSearch = async function() {
     const searchTerm = document.getElementById('search-input').value.toLowerCase();
-    const branchFilter = document.getElementById('branch-filter').value;
     const subjectFilter = document.getElementById('subject-filter').value;
 
     let query = supabase
         .from('documents')
-        .select('*, subjects(name, sections(name, semesters(name, branches(name))))');
+        .select('*, subjects(name)');
 
     if (subjectFilter) {
         query = query.eq('subject_id', subjectFilter);
     }
 
     const { data: documents } = await query;
-
     let filtered = documents || [];
 
-    // Filter by search term
     if (searchTerm) {
         filtered = filtered.filter(doc => 
             doc.title.toLowerCase().includes(searchTerm) ||
             (doc.description && doc.description.toLowerCase().includes(searchTerm)) ||
             (doc.subjects?.name && doc.subjects.name.toLowerCase().includes(searchTerm))
-        );
-    }
-
-    // Filter by branch
-    if (branchFilter) {
-        filtered = filtered.filter(doc => 
-            doc.subjects?.sections?.semesters?.branches?.id === branchFilter
         );
     }
 
@@ -286,7 +378,12 @@ window.performSearch = async function() {
 
 // ==================== UPLOAD ====================
 async function loadUploadOptions() {
-    // Load sections
+    if (!currentUser) {
+        document.getElementById('upload-login-required').style.display = 'block';
+        document.getElementById('upload-form-container').style.display = 'none';
+        return;
+    }
+
     const { data: sections } = await supabase
         .from('sections')
         .select('*, semesters(name, branches(name))')
@@ -298,8 +395,7 @@ async function loadUploadOptions() {
             <option value="${s.id}">${s.semesters?.branches?.name || ''} - ${s.semesters?.name || ''} - ${s.name}</option>
         `).join('');
 
-    // Load subjects when section changes
-    sectionSelect.addEventListener('change', async (e) => {
+    sectionSelect.onchange = async (e) => {
         const sectionId = e.target.value;
         if (sectionId) {
             const { data: subjects } = await supabase
@@ -312,10 +408,16 @@ async function loadUploadOptions() {
             subjectSelect.innerHTML = '<option value="">Choose subject...</option>' + 
                 (subjects || []).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
         }
-    });
+    };
 }
 
 window.uploadFile = async function() {
+    if (!currentUser) {
+        alert('Please login to upload files');
+        showAuthModal();
+        return;
+    }
+
     const sectionId = document.getElementById('upload-section-select').value;
     const subjectId = document.getElementById('upload-subject-select').value;
     const title = document.getElementById('upload-title').value;
@@ -328,27 +430,24 @@ window.uploadFile = async function() {
         return;
     }
 
-    if (file.size > 52428800) { // 50MB
+    if (file.size > 52428800) {
         alert('File size must be less than 50MB');
         return;
     }
 
     try {
-        // Upload to Supabase Storage
         const fileName = `${Date.now()}_${file.name}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
             .from('university-notes-files')
             .upload(fileName, file);
 
         if (uploadError) throw uploadError;
 
-        // Get public URL
         const { data: urlData } = supabase.storage
             .from('university-notes-files')
             .getPublicUrl(fileName);
 
-        // Save to database
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('documents')
             .insert([{
                 section_id: sectionId,
@@ -357,32 +456,29 @@ window.uploadFile = async function() {
                 description: description,
                 file_url: urlData.publicUrl,
                 file_type: file.type.split('/')[0] || 'file',
-                file_size: file.size
+                file_size: file.size,
+                uploaded_by: currentUser.id
             }]);
 
         if (error) throw error;
 
         alert('File uploaded successfully!');
-        // Clear form
         document.getElementById('upload-title').value = '';
         document.getElementById('upload-description').value = '';
         fileInput.value = '';
     } catch (error) {
-        console.error('Error uploading file:', error);
         alert('Error uploading file: ' + error.message);
     }
 };
 
 // ==================== MANAGE (ADMIN) ====================
 async function loadManageOptions() {
-    // Load branches for semester dropdown
     const { data: branches } = await supabase.from('branches').select('*').order('name');
     const semesterBranchSelect = document.getElementById('semester-branch-select');
     semesterBranchSelect.innerHTML = '<option value="">Select Branch</option>' + 
         (branches || []).map(b => `<option value="${b.id}">${b.name}</option>`).join('');
 
-    // Load semesters for section dropdown
-    semesterBranchSelect.addEventListener('change', async (e) => {
+    semesterBranchSelect.onchange = async (e) => {
         const branchId = e.target.value;
         if (branchId) {
             const { data: semesters } = await supabase
@@ -395,10 +491,9 @@ async function loadManageOptions() {
             sectionSemesterSelect.innerHTML = '<option value="">Select Semester</option>' + 
                 (semesters || []).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
         }
-    });
+    };
 
-    // Load sections for subject dropdown
-    document.getElementById('section-semester-select').addEventListener('change', async (e) => {
+    document.getElementById('section-semester-select').onchange = async (e) => {
         const semesterId = e.target.value;
         if (semesterId) {
             const { data: sections } = await supabase
@@ -411,7 +506,7 @@ async function loadManageOptions() {
             subjectSectionSelect.innerHTML = '<option value="">Select Section</option>' + 
                 (sections || []).map(s => `<option value="${s.id}">${s.name}</option>`).join('');
         }
-    });
+    };
 }
 
 window.createBranch = async function() {
@@ -429,7 +524,7 @@ window.createBranch = async function() {
     }
 
     try {
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('branches')
             .insert([{ name, description }]);
 
@@ -459,7 +554,7 @@ window.createSemester = async function() {
     }
 
     try {
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('semesters')
             .insert([{ branch_id: branchId, name, description }]);
 
@@ -488,7 +583,7 @@ window.createSection = async function() {
     }
 
     try {
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('sections')
             .insert([{ semester_id: semesterId, name, description }]);
 
@@ -517,7 +612,7 @@ window.createSubject = async function() {
     }
 
     try {
-        const { data, error} = await supabase
+        const { error } = await supabase
             .from('subjects')
             .insert([{ section_id: sectionId, name, description }]);
 
@@ -542,5 +637,10 @@ function formatFileSize(bytes) {
     return (bytes / 1048576).toFixed(2) + ' MB';
 }
 
-// Load dashboard on page load
-window.addEventListener('DOMContentLoaded', loadDashboard);
+window.addEventListener('DOMContentLoaded', () => {
+    loadDashboard();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+        currentUser = session?.user || null;
+        updateUIForUser(currentUser);
+    });
+});
