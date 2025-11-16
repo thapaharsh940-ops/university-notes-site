@@ -1,124 +1,170 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
 body {
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    padding: 20px;
-}
-
-.container {
-    max-width: 800px;
-    margin: 0 auto;
-    background: white;
-    border-radius: 10px;
-    padding: 30px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f6f7fb;
+    color: #222;
 }
 
 header {
+    background: #5b8cfc;
+    color: #fff;
+    padding: 2rem 0 1rem 0;
     text-align: center;
-    margin-bottom: 30px;
-    color: #333;
 }
 
-header h1 {
-    font-size: 2.5em;
-    margin-bottom: 10px;
-}
-
-.upload-section {
-    background: #f5f5f5;
-    padding: 25px;
-    border-radius: 8px;
-    margin-bottom: 30px;
-}
-
-.upload-section h2 {
-    margin-bottom: 20px;
-    color: #667eea;
-}
-
-form {
+.header-content {
     display: flex;
-    flex-direction: column;
-    gap: 15px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1050px;
+    margin: auto;
 }
 
-label {
-    font-weight: bold;
-    color: #555;
-}
-
-input[type="text"],
-input[type="file"],
-select {
-    padding: 10px;
-    border: 2px solid #ddd;
-    border-radius: 5px;
-    font-size: 16px;
-}
-
-input[type="file"] {
-    cursor: pointer;
-}
-
-button {
-    background: #667eea;
-    color: white;
-    padding: 12px 20px;
+.header-btn {
+    background: #fff;
     border: none;
+    color: #5b8cfc;
+    margin-left: 1rem;
+    font-size: 1rem;
     border-radius: 5px;
-    font-size: 16px;
+    padding: 0.4rem 1.2rem;
     cursor: pointer;
-    transition: background 0.3s;
+    transition: background 0.18s, color 0.18s;
+}
+.header-btn:hover, .logout-btn:hover {
+    background: #5b8cfc;
+    color: #fff;
 }
 
-button:hover {
-    background: #5568d3;
+nav {
+    background: #384d73;
 }
 
-#status {
-    margin-top: 15px;
-    padding: 10px;
-    border-radius: 5px;
+.nav-container {
+    display: flex;
+    justify-content: center;
+    padding: 0.3rem 0;
+    gap: 0.5rem;
+}
+
+.nav-btn {
+    background: none;
+    border: none;
+    color: #eee;
+    font-size: 1rem;
+    margin: 0 0.5rem;
+    padding: 0.5rem 1.45rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: border-bottom 0.2s, background 0.2s;
+}
+
+.nav-btn.active, .nav-btn:hover {
+    background: #4665a5;
+    border-bottom: 2px solid #fff;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.content-section {
+    display: none;
+    margin-top: 1.5rem;
+}
+
+.content-section.active {
+    display: block;
+}
+
+.stats-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.stat-card {
+    flex: 1;
+    background: #fff;
+    border-radius: 8px;
+    padding: 1rem 0.4rem;
+    box-shadow: 0 1px 8px #0001;
     text-align: center;
-    font-weight: bold;
+    min-width: 85px;
 }
 
-.success {
-    background: #d4edda;
-    color: #155724;
+.stat-number {
+    font-size: 2rem;
+    color: #5b8cfc;
 }
 
-.error {
-    background: #f8d7da;
-    color: #721c24;
+.recent-uploads {
+    margin-top: 1.1rem;
+    background: #fafcff;
+    border-radius: 6px;
+    padding: 0.9rem;
+    box-shadow: 0 1px 6px #0001;
 }
 
-.files-section h2 {
-    margin-bottom: 20px;
-    color: #667eea;
+.recent-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.6rem;
+    background: #f0f6ff;
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    flex-wrap: wrap;
 }
 
-.file-item {
-    background: #f9f9f9;
-    padding: 15px;
-    margin-bottom: 10px;
+.branch-card, .semester-card, .section-card, .subject-card, .document-card {
+    background: #fff;
+    border-radius: 6px;
+    margin: 0.8rem 0;
+    padding: 1rem 1.3rem;
+    box-shadow: 0 0.5px 2px #bbb2;
+    cursor: pointer;
+    transition: box-shadow 0.2s, background 0.2s;
+}
+.branch-card:hover, .semester-card:hover, .section-card:hover, .subject-card:hover {
+    box-shadow: 0 2px 16px #90caf980;
+    background: #f7fafc;
+}
+
+.download-btn {
+    background: #3bcc49;
+    color: white;
+    padding: 0.45rem 1.1rem;
     border-radius: 5px;
-    border-left: 4px solid #667eea;
+    border: none;
+    cursor: pointer;
 }
 
-.file-item h3 {
-    color: #333;
-    margin-bottom: 5px;
+.file-badge {
+    background: #5b8cfc15;
+    color: #2853a5;
+    padding: 0.18rem 0.55rem;
+    border-radius: 8px;
+    margin-left: 0.6rem;
+    font-size: 0.92rem;
 }
 
-.file-item p {
-    color: #666;
-    font-size: 14px;
+.file-size {
+    color: #555;
+    font-size: 0.9em;
+    margin-left: 0.7rem;
 }
+
+.form-container {
+    margin-bottom: 2rem;
+    background: #fff;
+    padding: 1rem 1.3rem 1.2rem 1.3rem;
+    border-radius: 7px;
+    box-shadow: 0 0.5px 2.5px #b0b3bb24;
+}
+
+.form-group {
+    margin: 0.8rem 0 0.6rem
